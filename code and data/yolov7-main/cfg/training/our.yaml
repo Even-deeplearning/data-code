@@ -1,0 +1,69 @@
+# parameters
+nc: 80  # number of classes
+depth_multiple: 1.0  # model depth multiple
+width_multiple: 1.0  # layer channel multiple
+
+# anchors
+anchors:
+  - [10,13, 16,30, 33,23]  # P3/8
+  - [30,61, 62,45, 59,119]  # P4/16
+  - [116,90, 156,198, 373,326]  # P5/32
+
+# yolov7-tiny backbone
+backbone:
+  # [from, number, module, args] c2, k=1, s=1, p=None, g=1, act=True
+  [   [-1,1,space_to_depth,[1]], # 0-P1/2  
+  
+      [-1,1,space_to_depth,[1]],  # 1-P2/4    
+   
+    [-1, 1, GSConv, [64, 1, 1]],
+    [-1, 1, VoVGSCSP, [64]], 
+    [-1, 1, MP, []], 
+    [-1, 1, VoVGSCSP, [64]], 
+    [-1, 1, MP, []], 
+    [-1, 1, GSConv, [128, 1, 1]],
+    [-1, 1, VoVGSCSP, [128]], 
+    [-1, 1, MP, []], 
+    [-1, 1, VoVGSCSP, [128]], 
+  ]
+
+# yolov7-tiny head
+head:
+  [[-1, 1, SimSPPF, [256, 5]],   #29
+   [-1, 1, BoT3_ATT, [256]],   #30
+  
+   [-1, 1, GSConv, [128, 1, 1]],
+     [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+
+   [[-1, 8], 1, Concat, [1]],
+   
+    [-1, 1, VoVGSCSP, [256]], #16
+    [-1, 1, GSConv, [128, 1, 1]],
+  
+   [-1, 1, GSConv, [64, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+ 
+   [[-1, 5], 1, Concat, [1]], #20
+
+   
+    [-1, 1, VoVGSCSP, [128]],  
+   
+   [-1,1,space_to_depth,[1]],
+   [[-1, 17], 1, Concat, [1]],
+   
+    [-1, 1, VoVGSCSP, [256]],  #23
+   
+    [-1,1,space_to_depth,[1]],
+   [[-1, 12], 1, Concat, [1]],
+   
+    [-1, 1, VoVGSCSP, [512]],     #26
+      
+   [21, 1, space_to_depth,[1]],
+      [-1, 1, SimAM, [512]],
+   [24, 1, space_to_depth,[1]],
+      [-1, 1, SimAM, [1024]],
+   [27, 1, space_to_depth,[1]],
+      [-1, 1, SimAM, [2048]],
+
+   [[29,31,33], 1, IDetect, [nc, anchors]],   # Detect(P3, P4, P5)
+  ]

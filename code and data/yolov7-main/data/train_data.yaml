@@ -1,0 +1,5 @@
+train: /root/yolov7-main/datasets/images/train
+val: /root/yolov7-main/datasets/images/val
+
+nc: 6
+names: ['crazing', 'inclusion', 'patches', 'pitted_surface', 'rolled-in_scale', 'scratches']
